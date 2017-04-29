@@ -31,8 +31,8 @@ public class JFR_Principal extends javax.swing.JFrame {
        
        this.setSize(1000, 640);
         fecha.setText(fechaactual());
-           this.setExtendedState(MAXIMIZED_BOTH);
-           // this.setLocationRelativeTo(null);
+        this.setExtendedState(MAXIMIZED_BOTH);
+        // this.setLocationRelativeTo(null);
             
 
     }
