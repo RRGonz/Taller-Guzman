@@ -19,14 +19,15 @@ public class JIFR_Servicios extends javax.swing.JInternalFrame {
     conectar c = new conectar();
     Connection con = c.conexion();
     
- /* bandera para activar cuando halla un error en validacion */
-    public static boolean err_validacion = false;
+ /* bandera para activar cuando halla un error en validacion y activar cuando se presione el boton de nuevo*/
+    public static boolean err_validacion = false , nuevo = false;
     
     String clave;
     
     public JIFR_Servicios() {
         initComponents();
      
+        cmp_idservicio.setEditable(false);
         limpiar();
         bloquear_all();
         mostrar_datos("");
@@ -37,8 +38,8 @@ public class JIFR_Servicios extends javax.swing.JInternalFrame {
     {
         btn_nuevo.setEnabled(true);
         btn_agregar.setEnabled(false); 
-        btn_actualizar.setEnabled(false);
-        btn_eliminar.setEnabled(false);
+        btn_actualizar.setEnabled(true);
+        btn_eliminar.setEnabled(true);
         btn_cancelar.setEnabled(false);
         
         cmp_idservicio.setEnabled(false);
@@ -52,15 +53,22 @@ public class JIFR_Servicios extends javax.swing.JInternalFrame {
     {
         btn_nuevo.setEnabled(false);
         btn_agregar.setEnabled(true);
-        btn_actualizar.setEnabled(true);
-        btn_eliminar.setEnabled(true);
+        btn_actualizar.setEnabled(false);
+        btn_eliminar.setEnabled(false);
         btn_cancelar.setEnabled(true);
         
         cmp_idservicio.setEnabled(true);
-        cmp_idservicio.setEditable(false);
         cmp_nombreservicio.setEnabled(true);
         cmp_costoservicio.setEnabled(true);
         cmp_descripcion.setEnabled(true);
+    }
+    
+    void habilitar_txts()
+    {
+        cmp_idservicio.setEnabled(true);
+        cmp_nombreservicio.setEnabled(true);
+        cmp_descripcion.setEnabled(true);
+        cmp_costoservicio.setEnabled(true);
     }
     
 /* limpiamos todos los campos de texto */
@@ -123,6 +131,21 @@ public class JIFR_Servicios extends javax.swing.JInternalFrame {
         }
     }
     
+    
+    void validar_campos_nullos()
+    {
+        String nombre = cmp_nombreservicio.getText();
+        String descripcion = cmp_descripcion.getText();
+        String costo = cmp_costoservicio.getText();
+        
+        if( nombre.equals("") || descripcion.equals("") || costo.equals("") )
+        {
+            err_validacion = true;
+            JOptionPane.showMessageDialog(null, "No puede dejar campos de texto vacios", "Error al Registrar", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    
     void registrar()
     {
         String nombre, costo, descripcion; 
@@ -132,6 +155,7 @@ public class JIFR_Servicios extends javax.swing.JInternalFrame {
         
         //Procedimiento para insertar datos en la tabla servicio
         String consulta_sql = "insert into servicio values (?,?,?,?)";
+        //sql = "INSERT INTO clientes (Id_cli,nom_cli,ape_cli,tel_cli,dir_cli,email_cli,rfc_cli,cel_cli,ciu_cli,est_cli,col_cli,cp_cli) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
         try 
         {
             PreparedStatement psd = con.prepareStatement(consulta_sql);
@@ -179,7 +203,7 @@ public class JIFR_Servicios extends javax.swing.JInternalFrame {
         }
     }
     
-    
+    //Metodo para CONSULTAR los datos
     void mostrar_datos(String dato)
     {
         //Declaramos los encabezados que tendra la tabla en un arreglo
@@ -202,7 +226,7 @@ public class JIFR_Servicios extends javax.swing.JInternalFrame {
             while(rs.next())
             {
                 //guardamos los registros en nuestro arreglo
-                registros[0] = rs.getString("clave_serv");
+                registros[0] = rs.getString("clave_serv");  //decimos que se obtenga el dato del atributo clave_serv
                 registros[1] = rs.getString("nom_serv");
                 registros[2] = rs.getString("desc_serv");
                 registros[3] = rs.getString("cost_serv");   
@@ -215,6 +239,54 @@ public class JIFR_Servicios extends javax.swing.JInternalFrame {
             Logger.getLogger(JIFR_Servicios.class.getName()).log(Level.SEVERE, null, ex);
         }
                 
+    }
+    
+    //metodo para modificar un registro
+    void modificar()
+    {
+        String nombre = cmp_nombreservicio.getText();
+        String descripcion = cmp_descripcion.getText();
+        String costo = cmp_costoservicio.getText();
+    
+        try 
+        {
+           //consulta de ACTUALIZAR en MySQL
+            String consulta_modificar = "UPDATE servicio SET nom_serv='"+ nombre +"', desc_serv='"+ descripcion 
+                                       +"', cost_serv='"+ costo +"' WHERE clave_serv = '"+ cmp_idservicio.getText() +"'";
+
+            PreparedStatement psd = con.prepareStatement( consulta_modificar );
+            int grd = psd.executeUpdate();  //ejecutamos la consulta
+            
+            if( grd > 0)    //si se completo la modificacion entra al if
+            {
+                JOptionPane.showMessageDialog(null, "Servicio " + cmp_nombreservicio.getText() +  " modificado con exito", "Registro Modificado", JOptionPane.INFORMATION_MESSAGE);
+                limpiar();
+                bloquear_all();
+            }
+        } 
+        catch (SQLException ex) {
+            Logger.getLogger(JIFR_Servicios.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    
+    void eliminar()
+    {
+        try 
+        {
+            PreparedStatement psd = con.prepareStatement("DELETE FROM servicio WHERE clave_serv='"+ cmp_idservicio.getText() +"'");
+            int grd = psd.executeUpdate();  //ejecutamos la consulta
+            
+            if( grd > 0)    //si se completo la eliminacion entra al if
+            {
+                JOptionPane.showMessageDialog(null, "Servicio " + cmp_nombreservicio.getText() +  " eliminado con exito", "Registro Eliminado", JOptionPane.INFORMATION_MESSAGE);
+                limpiar();
+                bloquear_all();
+            }
+        } 
+        catch (SQLException ex) {
+            Logger.getLogger(JIFR_Servicios.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
     
@@ -341,6 +413,11 @@ public class JIFR_Servicios extends javax.swing.JInternalFrame {
 
             }
         ));
+        t_datos.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                t_datosMouseClicked(evt);
+            }
+        });
         jScrollPane3.setViewportView(t_datos);
 
         jLabel6.setText("Buscar:");
@@ -393,7 +470,12 @@ public class JIFR_Servicios extends javax.swing.JInternalFrame {
             }
         });
 
-        btn_actualizar.setText("Actualizar");
+        btn_actualizar.setText("Modificar");
+        btn_actualizar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_actualizarActionPerformed(evt);
+            }
+        });
 
         btn_cancelar.setText("Cancelar");
         btn_cancelar.addActionListener(new java.awt.event.ActionListener() {
@@ -403,6 +485,11 @@ public class JIFR_Servicios extends javax.swing.JInternalFrame {
         });
 
         btn_eliminar.setText("Eliminar");
+        btn_eliminar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_eliminarActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -466,23 +553,27 @@ public class JIFR_Servicios extends javax.swing.JInternalFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btn_nuevoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_nuevoActionPerformed
+        nuevo = true;   //activamos la bandera que indica que se presiono el btn NUEVO
         desbloquear_all();
-        obtener_clave();
-        cmp_idservicio.setText(clave);
+        limpiar();
+        obtener_clave();    //obtenemos la clave automaticamente con nuestros metodos
+        cmp_idservicio.setText(clave);  //escribimos la clave en el campo del ID
         cmp_nombreservicio.requestFocus();  //le damos el foco al campo nombre_servicio
     }//GEN-LAST:event_btn_nuevoActionPerformed
 
     private void btn_cancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_cancelarActionPerformed
         bloquear_all();
         limpiar();
+        nuevo = false;
     }//GEN-LAST:event_btn_cancelarActionPerformed
 
     private void btn_agregarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_agregarActionPerformed
         validar_nombreServicio();
         validar_costo();
         validar_descripcion();
+        validar_campos_nullos();
         
-        if(err_validacion == false)
+        if(err_validacion == false) //si NO HAY ERROR registramos los datos
         {
             registrar();
             mostrar_datos("");  //cargamos nuestra tabla de mostrar datos
@@ -492,6 +583,60 @@ public class JIFR_Servicios extends javax.swing.JInternalFrame {
     private void cmp_buscarKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_cmp_buscarKeyReleased
         mostrar_datos(cmp_buscar.getText());    //cada vez que se ingrese un caracter cargamos los datos
     }//GEN-LAST:event_cmp_buscarKeyReleased
+
+    private void t_datosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_t_datosMouseClicked
+        if( evt.getButton() == 1 )  //si se da click dentro de la tabla entra al if
+        {
+            if( nuevo == false )    //Si el boton nuevo NO ESTA PRESIONADO entra
+            {
+                int fila = t_datos.getSelectedRow();    //Guardamos la fila que se esta seleccionando (de la tabla) en una variable
+
+                if (fila >= 0)  //si fila es igual o mayor que 0 quiere decir que una de las filas son seleccionadas
+                {
+                    //obtenemos el texto de cada una de las columnas y las escibimos en cada campo de texto
+                    cmp_idservicio.setText(t_datos.getValueAt(fila, 0).toString()); //obtenemos el texto del num de fila y columna
+                    cmp_nombreservicio.setText(t_datos.getValueAt(fila,1).toString());
+                    cmp_descripcion.setText(t_datos.getValueAt(fila, 2).toString());
+                    cmp_costoservicio.setText(t_datos.getValueAt(fila, 3).toString());
+                    
+                    habilitar_txts();   //habilitamos todos los campos de texto para poder sobrescribir en ellos
+                }   
+            }
+        
+        }
+    }//GEN-LAST:event_t_datosMouseClicked
+
+    private void btn_actualizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_actualizarActionPerformed
+        if( !cmp_idservicio.getText().equals("") )  //Si el campo del ID NO ESTA VACIO, modificamos el registro
+        {
+            modificar();
+            mostrar_datos("");  //cargamos nuestra tabla de mostrar datos
+        }
+        else
+        {
+            JOptionPane.showMessageDialog(null, "Seleccione en la tabla un registro a modificar", "Error al Modificar", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_btn_actualizarActionPerformed
+
+    private void btn_eliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_eliminarActionPerformed
+        String nombre = cmp_nombreservicio.getText();
+        
+        if( !cmp_idservicio.getText().equals("") )  //Si el campo del ID NO ESTA VACIO, eliminamos el registro
+        {
+            //preguntamos si esta seguro de elimnar, si si entramos al if y eliminamos el registro
+            int resp = JOptionPane.showConfirmDialog(null, "¿Esta seguro que deseas eliminar el servicio "+ nombre +"?", "Alerta!", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
+            //si=0    no=1
+            if(resp == 0)
+            {
+                eliminar();
+                mostrar_datos("");  //cargamos nuestra tabla de mostrar datos
+            }
+        }
+        else
+        {
+            JOptionPane.showMessageDialog(null, "Seleccione en la tabla un registro a eliminar", "Error al eliminar", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_btn_eliminarActionPerformed
 
     
     
